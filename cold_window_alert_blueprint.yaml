@@ -43,12 +43,22 @@ blueprint:
         entity:
           filter:
             - domain: weather
-    notify_service:
-      name: Benachrichtigungsdienst
-      description: Welcher Benachrichtigungsdienst verwendet werden soll
-      default: notify.notify
+    enable_second_reminder:
+      name: Zweite Erinnerung aktivieren
+      description: Soll eine zweite Erinnerung gesendet werden, wenn das Fenster/die Tür immer noch offen ist?
+      default: false
       selector:
-        text:
+        boolean:
+    second_reminder_delay:
+      name: Verzögerung für zweite Erinnerung (Minuten)
+      description: Wie lange nach der ersten Erinnerung soll die zweite gesendet werden?
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 180
+          unit_of_measurement: "min"
+          mode: slider
 
 mode: queued
 max: 20
@@ -70,11 +80,34 @@ action:
   - variables:
       weather_entity: !input weather_entity
       duration_minutes: !input duration_minutes
-      notify_service: !input notify_service
-  - action: "{{ notify_service }}"
+      enable_second_reminder: !input enable_second_reminder
+      second_reminder_delay: !input second_reminder_delay
+      window_sensor: !input window_door_sensor
+  - action: notify.notify
     data:
       message: >-
         {{ trigger.to_state.attributes.friendly_name | default(trigger.to_state.entity_id) }}
         ist seit über {{ duration_minutes }} Minuten offen,
         bei {{ state_attr(weather_entity, 'temperature') }}°C draußen.
         Denke daran es zu schließen.
+  - if:
+      - condition: template
+        value_template: "{{ enable_second_reminder }}"
+    then:
+      - wait_for_trigger:
+          - platform: state
+            entity_id: !input window_door_sensor
+            to: "off"
+        timeout:
+          minutes: "{{ second_reminder_delay }}"
+      - if:
+          - condition: template
+            value_template: "{{ wait.trigger == none }}"
+        then:
+          - action: notify.notify
+            data:
+              message: >-
+                ⚠️ ZWEITE ERINNERUNG: {{ state_attr(window_sensor, 'friendly_name') | default(window_sensor) }}
+                ist immer noch offen (seit über {{ duration_minutes + second_reminder_delay }} Minuten),
+                bei {{ state_attr(weather_entity, 'temperature') }}°C draußen.
+                Bitte schließen!
