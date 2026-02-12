@@ -1,0 +1,81 @@
+blueprint:
+  name: Fenster/Tür offen bei Kälte Warnung
+  description: Benachrichtigt wenn ein Fenster oder eine Tür länger als die konfigurierte Zeit bei niedrigen Außentemperaturen offen ist.
+  domain: automation
+  input:
+    window_door_sensor:
+      name: Fenster/Tür Sensor
+      description: Der Sensor der überwacht werden soll
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class:
+                - door
+                - window
+                - opening
+    duration_minutes:
+      name: Dauer (Minuten)
+      description: Wie lange das Fenster/die Tür offen sein muss bevor eine Warnung gesendet wird
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 120
+          unit_of_measurement: "min"
+          mode: slider
+    temperature_threshold:
+      name: Temperatur Schwelle
+      description: Temperatur unter der die Warnung gesendet werden soll
+      default: 15
+      selector:
+        number:
+          min: -20
+          max: 30
+          unit_of_measurement: "°C"
+          mode: slider
+    weather_entity:
+      name: Wetter Entity
+      description: Wetter-Entity die für die Außentemperatur verwendet wird
+      default: weather.forecast_home
+      selector:
+        entity:
+          filter:
+            - domain: weather
+    notify_service:
+      name: Benachrichtigungsdienst
+      description: Welcher Benachrichtigungsdienst verwendet werden soll
+      default: notify.notify
+      selector:
+        text:
+
+variables:
+  weather_entity: !input weather_entity
+  temperature_threshold: !input temperature_threshold
+  duration_minutes: !input duration_minutes
+  notify_service: !input notify_service
+
+mode: queued
+max: 20
+
+trigger:
+  - platform: state
+    entity_id: !input window_door_sensor
+    to: "on"
+    for:
+      minutes: !input duration_minutes
+
+condition:
+  - condition: numeric_state
+    entity_id: !input weather_entity
+    attribute: temperature
+    below: !input temperature_threshold
+
+action:
+  - action: "{{ notify_service }}"
+    data:
+      message: >-
+        {{ trigger.to_state.attributes.friendly_name | default(trigger.to_state.entity_id) }}
+        ist seit über {{ duration_minutes }} Minuten offen,
+        bei {{ state_attr(weather_entity, 'temperature') }}°C draußen.
+        Denke daran es zu schließen.
