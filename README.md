@@ -13,7 +13,8 @@ Dieser Blueprint ermöglicht es, für jedes Fenster und jede Tür eine individue
 - ✅ Individuell konfigurierbare Dauer pro Fenster/Tür (1-120 Minuten)
 - ✅ Individuell konfigurierbare Temperatur-Schwelle pro Fenster/Tür (-20 bis 30°C)
 - ✅ Flexible Wetter-Entity Auswahl
-- ✅ Anpassbarer Benachrichtigungsdienst
+- ✅ Optionale zweite Erinnerung (konfigurierbare Verzögerung: 5-180 Minuten)
+- ✅ Automatische Prüfung ob Fenster/Tür geschlossen wurde
 - ✅ Keine Helper (input_number) erforderlich
 
 ## Installation
@@ -45,7 +46,8 @@ Dieser Blueprint ermöglicht es, für jedes Fenster und jede Tür eine individue
    - **Dauer**: Wie lange soll das Fenster offen sein? (Standard: 10 Minuten)
    - **Temperatur Schwelle**: Bei welcher Temperatur warnen? (Standard: 15°C)
    - **Wetter Entity**: Wetter-Sensor (Standard: `weather.forecast_home`)
-   - **Benachrichtigungsdienst**: z.B. `notify.notify`
+   - **Zweite Erinnerung aktivieren**: Optional - sende eine zweite Warnung (Standard: Aus)
+   - **Verzögerung für zweite Erinnerung**: Wie lange warten? (Standard: 30 Minuten)
 
 ## Beispiel
 
@@ -54,9 +56,10 @@ Für ein Wohnzimmerfenster könnte die Konfiguration so aussehen:
 - Dauer: 15 Minuten
 - Temperatur: 10°C
 - Wetter: `weather.forecast_home`
-- Benachrichtigung: `notify.notify`
+- Zweite Erinnerung: Ja
+- Verzögerung: 30 Minuten
 
-→ Du erhältst eine Benachrichtigung, wenn das Wohnzimmerfenster länger als 15 Minuten offen ist und es draußen unter 10°C hat.
+→ Du erhältst eine Benachrichtigung, wenn das Wohnzimmerfenster länger als 15 Minuten offen ist und es draußen unter 10°C hat. Wenn das Fenster nach weiteren 30 Minuten immer noch offen ist, erhältst du eine zweite Erinnerung.
 
 ## Lizenz
 
@@ -64,7 +67,12 @@ MIT License - Frei verwendbar
 
 ## Changelog
 
+### v1.1.0 (2026-02-12)
+- ✨ Neue Funktion: Optionale zweite Erinnerung mit konfigurierbarer Verzögerung
+- ✨ Automatische Prüfung ob Fenster/Tür geschlossen wurde (verhindert unnötige zweite Erinnerungen)
+- 🔧 Vereinfachte Konfiguration: Benachrichtigungsdienst fest auf `notify.notify` gesetzt
+
 ### v1.0.0 (2026-02-12)
-- Initiales Release
-- Unterstützung für individuelle Fenster/Tür-Konfigurationen
-- Keine Helper erforderlich
+- 🎉 Initiales Release
+- ✅ Unterstützung für individuelle Fenster/Tür-Konfigurationen
+- ✅ Keine Helper erforderlich
