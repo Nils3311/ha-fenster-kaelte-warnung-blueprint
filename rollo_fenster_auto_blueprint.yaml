@@ -1,0 +1,81 @@
+blueprint:
+  name: Rollo bei Fensteröffnung
+  description: >-
+    Öffnet ein Rollo teilweise wenn ein Fenster oder eine Tür geöffnet wird,
+    sofern das Rollo vollständig geschlossen ist. Beim Schließen des Fensters
+    wird das Rollo wieder geschlossen — aber nur, wenn die Position nicht
+    manuell verändert wurde.
+  domain: automation
+  input:
+    sensor_entity:
+      name: Fenster-/Türsensor
+      description: Der Binärsensor des Fensters oder der Tür
+      selector:
+        entity:
+          filter:
+            - domain: binary_sensor
+              device_class:
+                - window
+                - door
+    cover_entity:
+      name: Rollo
+      description: Das zugehörige Rollo
+      selector:
+        entity:
+          filter:
+            - domain: cover
+    open_position:
+      name: Öffnungsposition
+      description: Position in Prozent auf die das Rollo geöffnet wird
+      default: 30
+      selector:
+        number:
+          min: 5
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
+
+mode: single
+
+variables:
+  cover: !input cover_entity
+  position: !input open_position
+
+trigger:
+  - platform: state
+    entity_id: !input sensor_entity
+    from: "off"
+    to: "on"
+    id: "window_opened"
+  - platform: state
+    entity_id: !input sensor_entity
+    from: "on"
+    to: "off"
+    id: "window_closed"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "window_opened"
+          - condition: template
+            value_template: "{{ state_attr(cover, 'current_position') | int(0) == 0 }}"
+        sequence:
+          - action: cover.set_cover_position
+            target:
+              entity_id: !input cover_entity
+            data:
+              position: !input open_position
+      - conditions:
+          - condition: trigger
+            id: "window_closed"
+          - condition: template
+            value_template: >-
+              {{ (state_attr(cover, 'current_position') | int(0)) == (position | int(30))
+                 or (states[cover].state == 'opening'
+                     and (state_attr(cover, 'current_position') | int(0)) <= (position | int(30))) }}
+        sequence:
+          - action: cover.close_cover
+            target:
+              entity_id: !input cover_entity
