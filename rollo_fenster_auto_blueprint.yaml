@@ -4,7 +4,8 @@ blueprint:
     Öffnet ein Rollo teilweise wenn ein Fenster oder eine Tür geöffnet wird,
     sofern das Rollo vollständig geschlossen ist. Beim Schließen des Fensters
     wird das Rollo wieder geschlossen — aber nur, wenn die Position nicht
-    manuell verändert wurde.
+    manuell verändert wurde. Unterstützt sowohl Covers mit Positionssteuerung
+    (z.B. ESPSomfy) als auch solche mit nur Zwischenposition (z.B. Becker).
   domain: automation
   input:
     sensor_entity:
@@ -26,7 +27,11 @@ blueprint:
             - domain: cover
     open_position:
       name: Öffnungsposition
-      description: Position in Prozent auf die das Rollo geöffnet wird
+      description: >-
+        Position in Prozent auf die das Rollo geöffnet wird.
+        Wird nur bei Covers mit Positionssteuerung verwendet.
+        Bei Covers ohne Positionssteuerung (z.B. Becker) wird
+        automatisch die Zwischenposition (My-Taste) angefahren.
       default: 30
       selector:
         number:
@@ -41,6 +46,14 @@ mode: single
 variables:
   cover: !input cover_entity
   position: !input open_position
+  has_set_position: >-
+    {{ (state_attr(cover, 'supported_features') | int(0)) | bitwise_and(4) > 0 }}
+  target_position: >-
+    {% if has_set_position %}
+      {{ position | int(30) }}
+    {% else %}
+      {{ state_attr(cover, 'intermediate_position_up') | int(25) }}
+    {% endif %}
 
 trigger:
   - platform: state
@@ -62,19 +75,27 @@ action:
           - condition: template
             value_template: "{{ state_attr(cover, 'current_position') | int(0) == 0 }}"
         sequence:
-          - action: cover.set_cover_position
-            target:
-              entity_id: !input cover_entity
-            data:
-              position: !input open_position
+          - if:
+              - condition: template
+                value_template: "{{ has_set_position }}"
+            then:
+              - action: cover.set_cover_position
+                target:
+                  entity_id: !input cover_entity
+                data:
+                  position: !input open_position
+            else:
+              - action: cover.open_cover_tilt
+                target:
+                  entity_id: !input cover_entity
       - conditions:
           - condition: trigger
             id: "window_closed"
           - condition: template
             value_template: >-
-              {{ (state_attr(cover, 'current_position') | int(0)) == (position | int(30))
+              {{ (state_attr(cover, 'current_position') | int(0)) == (target_position | int(30))
                  or (states[cover].state == 'opening'
-                     and (state_attr(cover, 'current_position') | int(0)) <= (position | int(30))) }}
+                     and (state_attr(cover, 'current_position') | int(0)) <= (target_position | int(30))) }}
         sequence:
           - action: cover.close_cover
             target:
