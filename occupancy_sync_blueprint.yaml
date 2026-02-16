@@ -1,0 +1,69 @@
+blueprint:
+  name: "Raumbelegung Sync (Bayesian → Helper)"
+  description: >
+    Syncs a Bayesian occupancy sensor to an input_boolean helper.
+    Turns the helper ON immediately when the sensor detects occupancy.
+    Turns the helper OFF after a configurable delay when the sensor clears,
+    with a confirmation check to prevent flickering.
+    Manual override of the input_boolean is preserved.
+  domain: automation
+  input:
+    occupancy_sensor:
+      name: Bayesian Occupancy Sensor
+      description: "The binary_sensor.*_raumnutzung Bayesian sensor for this room"
+      selector:
+        entity:
+          domain: binary_sensor
+    occupancy_helper:
+      name: Occupancy Helper
+      description: "The input_boolean.*_belegt helper for this room"
+      selector:
+        entity:
+          domain: input_boolean
+    off_delay:
+      name: Turn-Off Delay (minutes)
+      description: >
+        How many minutes to wait after the Bayesian sensor turns off
+        before marking the room as empty. Prevents flickering.
+      default: 2
+      selector:
+        number:
+          min: 0
+          max: 15
+          step: 1
+          unit_of_measurement: minutes
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input occupancy_sensor
+    to: "on"
+    id: "occupied"
+  - platform: state
+    entity_id: !input occupancy_sensor
+    to: "off"
+    id: "not_occupied"
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: "occupied"
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: !input occupancy_helper
+
+      - conditions:
+          - condition: trigger
+            id: "not_occupied"
+        sequence:
+          - delay:
+              minutes: !input off_delay
+          - condition: state
+            entity_id: !input occupancy_sensor
+            state: "off"
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input occupancy_helper
