@@ -792,5 +792,39 @@ Alternatively, you could replace the live directory with a symlink to the repo �
 6. **Test locally** with `python3 -c "import ast; ast.parse(open('file').read())"` after every change
 7. **Test in HA** by copying to live dir and restarting (takes 60 seconds)
 
-*Last updated: 2026-03-14 22:30*
+### Gotcha 13: MAP chunks contain double-encoded JSON
+
+`MAP.0` through `MAP.N` concatenate to a JSON array, but each element is a **JSON string**, not a dict:
+```json
+["{\"mowingAreas\":{...},\"name\":\"Map1\"}", "{\"name\":\"Map2\"}"]
+```
+You must parse twice:
+```python
+maps_raw = json.loads(reassembled_str)  # Outer array
+maps = [json.loads(m) if isinstance(m, str) else m for m in maps_raw]  # Inner strings
+```
+
+### Gotcha 14: M_PATH may be empty
+
+`M_PATH.info` can be `2` (just `[]`) when no mowing session is active or paths have been cleared. Always check length before parsing. Paths only populate during/after a mowing session.
+
+---
+
+## 16. Proof of Concept: Map Rendering Works!
+
+`test_mova_render_map.py` successfully renders the garden map from cloud data as a PNG:
+
+- **Input:** `mova_full_mapdata.json` (57KB, from `getDeviceData`)
+- **Output:** `mova_map_rendered.png` (800x800, 10KB PNG)
+- **Content:** Garden outline, mowing area (green), 4 forbidden zones (red), charging station (blue dot)
+
+The rendered map matches the MOVAhome app display, confirming the data pipeline is correct.
+
+**This proves the entire chain works:** Login → getDeviceData → chunk reassembly → JSON parse → polygon rendering → PNG output.
+
+The next step is wiring this renderer into the HA camera entity to replace the broken vacuum-style map renderer.
+
+---
+
+*Last updated: 2026-03-14 22:45*
 *Author: Claude (assisted by Nils)*
