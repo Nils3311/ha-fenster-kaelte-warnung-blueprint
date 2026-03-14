@@ -90,37 +90,37 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
-| CONN-01 | Phase 2 | Pending |
-| CONN-02 | Phase 2 | Pending |
-| CONN-03 | Phase 2 | Pending |
-| CONN-04 | Phase 2 | Pending |
-| CTRL-01 | Phase 2 | Pending |
-| CTRL-02 | Phase 2 | Pending |
-| CTRL-03 | Phase 2 | Pending |
-| SENS-01 | Phase 3 | Pending |
-| SENS-02 | Phase 3 | Pending |
-| SENS-03 | Phase 3 | Pending |
-| SENS-04 | Phase 3 | Pending |
-| SENS-05 | Phase 3 | Pending |
-| SENS-06 | Phase 3 | Pending |
-| SENS-07 | Phase 3 | Pending |
-| SENS-08 | Phase 3 | Pending |
-| MAP-01 | Phase 4 | Pending |
-| MAP-02 | Phase 4 | Pending |
-| MAP-03 | Phase 4 | Pending |
-| MAP-04 | Phase 4 | Pending |
-| CLEAN-01 | Phase 3 | Pending |
-| CLEAN-02 | Phase 1 | Pending |
+| FOUND-01 | Phase 1: Stabilize and Connect | Pending |
+| FOUND-02 | Phase 1: Stabilize and Connect | Pending |
+| FOUND-03 | Phase 1: Stabilize and Connect | Pending |
+| FOUND-04 | Phase 1: Stabilize and Connect | Pending |
+| CONN-01 | Phase 1: Stabilize and Connect | Pending |
+| CONN-02 | Phase 1: Stabilize and Connect | Pending |
+| CONN-03 | Phase 1: Stabilize and Connect | Pending |
+| CONN-04 | Phase 1: Stabilize and Connect | Pending |
+| CLEAN-02 | Phase 1: Stabilize and Connect | Pending |
+| CTRL-01 | Phase 2: Control and Sensors | Pending |
+| CTRL-02 | Phase 2: Control and Sensors | Pending |
+| CTRL-03 | Phase 2: Control and Sensors | Pending |
+| SENS-01 | Phase 2: Control and Sensors | Pending |
+| SENS-02 | Phase 2: Control and Sensors | Pending |
+| SENS-03 | Phase 2: Control and Sensors | Pending |
+| SENS-04 | Phase 2: Control and Sensors | Pending |
+| SENS-05 | Phase 2: Control and Sensors | Pending |
+| SENS-06 | Phase 2: Control and Sensors | Pending |
+| SENS-07 | Phase 2: Control and Sensors | Pending |
+| SENS-08 | Phase 2: Control and Sensors | Pending |
+| CLEAN-01 | Phase 2: Control and Sensors | Pending |
+| MAP-01 | Phase 3: Live Map | Pending |
+| MAP-02 | Phase 3: Live Map | Pending |
+| MAP-03 | Phase 3: Live Map | Pending |
+| MAP-04 | Phase 3: Live Map | Pending |
 
 **Coverage:**
 - v1 requirements: 25 total
 - Mapped to phases: 25
-- Unmapped: 0 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-14*
-*Last updated: 2026-03-14 after initial definition*
+*Last updated: 2026-03-14 after roadmap creation (3-phase coarse structure)*
