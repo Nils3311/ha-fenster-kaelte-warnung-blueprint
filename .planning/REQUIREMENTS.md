@@ -9,17 +9,17 @@ Requirements for initial working release. Each maps to roadmap phases.
 
 ### Foundation
 
-- [ ] **FOUND-01**: Integration installs without errors on current HA (2025.x+) with all dependencies resolved
-- [ ] **FOUND-02**: Dead `py-mini-racer` dependency replaced with `mini-racer`
-- [ ] **FOUND-03**: All dependency versions pinned in manifest.json
-- [ ] **FOUND-04**: paho-mqtt v2.0 callback API compatibility verified
+- [x] **FOUND-01**: Integration installs without errors on current HA (2025.x+) with all dependencies resolved
+- [x] **FOUND-02**: Dead `py-mini-racer` dependency replaced with `mini-racer`
+- [x] **FOUND-03**: All dependency versions pinned in manifest.json
+- [x] **FOUND-04**: paho-mqtt v2.0 callback API compatibility verified
 
 ### Connectivity
 
 - [ ] **CONN-01**: User can add Mova 600 Plus via config flow using MOVAhome account credentials
 - [ ] **CONN-02**: Integration discovers and pairs with Mova 600 Plus device (model ID confirmed)
 - [ ] **CONN-03**: Cloud MQTT protocol maintains stable connection to Mova 600 Plus
-- [ ] **CONN-04**: Unknown property IDs from Mova 600 Plus do not crash the integration (fix #46)
+- [x] **CONN-04**: Unknown property IDs from Mova 600 Plus do not crash the integration (fix #46)
 
 ### Control
 
@@ -48,7 +48,7 @@ Requirements for initial working release. Each maps to roadmap phases.
 ### Cleanup
 
 - [ ] **CLEAN-01**: Vacuum-specific entities (suction, mop, carpet, dust bin) are not exposed for mower devices
-- [ ] **CLEAN-02**: Config flow deprecation warnings resolved (fix #41)
+- [x] **CLEAN-02**: Config flow deprecation warnings resolved (fix #41)
 
 ## v2 Requirements
 
@@ -90,15 +90,15 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1: Stabilize and Connect | Pending |
-| FOUND-02 | Phase 1: Stabilize and Connect | Pending |
-| FOUND-03 | Phase 1: Stabilize and Connect | Pending |
-| FOUND-04 | Phase 1: Stabilize and Connect | Pending |
+| FOUND-01 | Phase 1: Stabilize and Connect | Complete |
+| FOUND-02 | Phase 1: Stabilize and Connect | Complete |
+| FOUND-03 | Phase 1: Stabilize and Connect | Complete |
+| FOUND-04 | Phase 1: Stabilize and Connect | Complete |
 | CONN-01 | Phase 1: Stabilize and Connect | Pending |
 | CONN-02 | Phase 1: Stabilize and Connect | Pending |
 | CONN-03 | Phase 1: Stabilize and Connect | Pending |
-| CONN-04 | Phase 1: Stabilize and Connect | Pending |
-| CLEAN-02 | Phase 1: Stabilize and Connect | Pending |
+| CONN-04 | Phase 1: Stabilize and Connect | Complete |
+| CLEAN-02 | Phase 1: Stabilize and Connect | Complete |
 | CTRL-01 | Phase 2: Control and Sensors | Pending |
 | CTRL-02 | Phase 2: Control and Sensors | Pending |
 | CTRL-03 | Phase 2: Control and Sensors | Pending |
