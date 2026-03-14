@@ -381,5 +381,216 @@ python3 test_mova_cloud.py
 
 ---
 
-*Last updated: 2026-03-14 21:00*
+---
+
+## 12. MAP DATA BREAKTHROUGH (Late Session)
+
+### The Correct Endpoint: `iotuserdata/getDeviceData`
+
+```
+POST /dreame-user-iot/iotuserdata/getDeviceData
+Content-Type: application/json
+Dreame-Auth: <token>
+
+{"did": "-113852546", "uid": "14935817", "region": "eu"}
+```
+
+**This returns ALL device data including the complete map!** Response is a dict with 58 keys.
+
+### Map Data Structure
+
+Map data is split across `MAP.0` through `MAP.29` (each 1024 chars max). `MAP.info` gives the total character count (18828). Reassemble by concatenating chunks in order and trimming to `MAP.info` length.
+
+**Reassembled map is a JSON array of 2 map objects:**
+
+```json
+[
+  {
+    "mowingAreas": {"dataType": "Map", "value": [[1, {"id": 1, "type": 0, "path": [{"x": 1400, "y": 3440}, ...]}]]},
+    "forbiddenAreas": {"dataType": "Map", "value": [...]},  // 4 forbidden zones
+    "contours": {"dataType": "Map", "value": [...]},          // 4 contour lines
+    "paths": {"dataType": "Map", "value": []},
+    "spotAreas": {"dataType": "Map", "value": []},
+    "cleanPoints": {"dataType": "Map", "value": []},
+    "obstacles": {"dataType": "Map", "value": []},
+    "boundary": {"x1": -15050, "y1": -22710, "x2": 1420, "y2": 7330},
+    "totalArea": 199,
+    "name": "Map1",
+    "mapIndex": 0,
+    "md5sum": "33617bd6a510cc29abbf37cfae20617a"
+  },
+  {
+    "name": "Map2",
+    "mapIndex": 1,
+    "totalArea": 0
+    // Empty second map slot
+  }
+]
+```
+
+**Coordinate system:** All X/Y values appear to be in millimeters relative to the charging station.
+
+### Mowing Path Data
+
+`M_PATH.0` through `M_PATH.15` contain the mowing path coordinates. `M_PATH.info` = total char count.
+
+Path format: flat arrays of `[x, y]` pairs, with `[32767, -32768]` as segment separator (pen-up marker).
+
+```
+[-4,-250],[-1029,-250],[-1029,-260],[-4,-260],[0,-270],[-1034,-270],...
+[32767,-32768],  // pen-up: move without cutting
+[-311,284],[-311,294],[-919,294],...
+```
+
+### Other Data Keys
+
+| Key | Content |
+|-----|---------|
+| `SETTINGS.0-1` | Mower config: mowing height, edge mode, obstacle avoidance settings |
+| `SCHEDULE_TASK.0` | Scheduled mowing tasks with times and days |
+| `FBD_NTYPE.0` | Forbidden zone notification types |
+| `OTA_INFO.0` | Firmware update info |
+| `prop.s_auto_upgrade` | Auto-upgrade setting |
+
+### Implementation Plan for Map Display
+
+**Step 1: Add `getDeviceData` API call to protocol.py**
+```python
+def get_device_user_data(self) -> dict:
+    """Fetch all device data including map via iotuserdata endpoint."""
+    response = self._api_call(
+        f"{self._strings[23]}/{self._strings[26]}/{self._strings[44]}",
+        {"did": str(self._did), "uid": str(self._uid), "region": self._country}
+    )
+    if response and response.get("code") == 0:
+        return response.get("data", {})
+    return {}
+```
+
+Note: `self._strings[26]` = `"iotuserdata"`, `self._strings[44]` = `"getDeviceData"`
+
+**Step 2: Parse chunked map data**
+```python
+def parse_chunked_data(data: dict, prefix: str) -> str:
+    """Reassemble chunked data (MAP.0, MAP.1, ..., MAP.N) using prefix.info as length."""
+    total_len = int(data.get(f"{prefix}.info", 0))
+    if total_len == 0:
+        return None
+    chunks = {}
+    for key, val in data.items():
+        if key.startswith(f"{prefix}.") and key != f"{prefix}.info":
+            idx = int(key.split(".")[1])
+            chunks[idx] = str(val)
+    full_str = "".join(chunks[i] for i in sorted(chunks.keys()))
+    return full_str[:total_len]
+```
+
+**Step 3: Create a Mova-specific MapManager (or adapt existing)**
+
+The existing `DreameMapMowerMapManager` expects binary AES-encrypted map frames from `get_device_property`. For Mova, the map is:
+- Plain JSON (not encrypted)
+- Stored as chunked user data (not cloud property)
+- Contains polygon paths (not raster pixel data)
+
+**Two approaches:**
+1. **Adapter:** Convert Mova JSON map format to the format `DreameMapMowerMapManager` expects
+2. **New renderer:** Create a simpler PNG renderer that draws polygons from X/Y coordinates
+
+Option 2 is likely easier since the Mova map format is fundamentally different (vector polygons vs raster pixels).
+
+**Step 4: Render map as PNG**
+```python
+from PIL import Image, ImageDraw
+
+def render_mova_map(map_data: dict, path_data: str = None, width=800, height=800) -> bytes:
+    boundary = map_data["boundary"]
+    # Scale coordinates to image size
+    x_range = boundary["x2"] - boundary["x1"]
+    y_range = boundary["y2"] - boundary["y1"]
+    scale = min(width / x_range, height / y_range) * 0.9
+
+    img = Image.new("RGB", (width, height), (34, 139, 34))  # green background
+    draw = ImageDraw.Draw(img)
+
+    # Draw mowing areas
+    for area_id, area in map_data["mowingAreas"]["value"]:
+        points = [(int((p["x"] - boundary["x1"]) * scale + width*0.05),
+                    int((p["y"] - boundary["y1"]) * scale + height*0.05))
+                   for p in area["path"]]
+        draw.polygon(points, fill=(144, 238, 144))
+
+    # Draw forbidden areas
+    for area_id, area in map_data["forbiddenAreas"]["value"]:
+        points = [(int((p["x"] - boundary["x1"]) * scale + width*0.05),
+                    int((p["y"] - boundary["y1"]) * scale + height*0.05))
+                   for p in area["path"]]
+        draw.polygon(points, fill=(255, 0, 0, 128))
+
+    # Draw mowing path
+    if path_data:
+        # Parse path coordinates and draw lines
+        pass
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+```
+
+### Properties via `iotstatus/props` (Correct Endpoint for Mova)
+
+Instead of the non-existent `sendCommand`, use `iotstatus/props`:
+
+```python
+def get_properties_mova(self, siid_piid_list: list[str]) -> list[dict]:
+    """Get current property values via iotstatus/props.
+
+    Args:
+        siid_piid_list: List of "siid.piid" strings, e.g. ["2.1", "3.1"]
+
+    Returns:
+        List of {"key": "2.1", "value": "1", "updateDate": 123456789}
+    """
+    keys_str = ",".join(siid_piid_list)
+    response = self._api_call(
+        f"{self._strings[23]}/{self._strings[25]}/{self._strings[41]}",
+        {"did": str(self._did), "keys": keys_str}
+    )
+    if response and response.get("code") == 0:
+        return response.get("data", [])
+    return []
+```
+
+---
+
+## 13. Summary: What Needs to Change in the Integration
+
+### protocol.py
+1. Add `get_device_user_data()` method using `iotuserdata/getDeviceData`
+2. Add `get_properties_mova()` method using `iotstatus/props`
+3. Fix or replace `sendCommand` calls — endpoint doesn't exist for Mova
+
+### device.py
+1. On startup, call `get_device_user_data()` to fetch map + settings
+2. Use `get_properties_mova()` for property polling instead of broken `sendCommand`
+3. Parse `SETTINGS` data for mower configuration
+4. Parse `SCHEDULE_TASK` for schedule entities
+
+### map.py (or new mova_map.py)
+1. New map parser for Mova JSON format (polygon-based, not raster)
+2. Chunk reassembly logic (`MAP.0-N` + `MAP.info`)
+3. Path reassembly logic (`M_PATH.0-N` + `M_PATH.info`)
+4. PNG renderer using PIL (draw polygons + paths)
+
+### camera.py
+1. Use new Mova map renderer instead of `DreameMowerMapOptimizer`
+2. Periodic refresh via `getDeviceData` (map updates during mowing)
+
+### Estimated Effort
+- **Properties via iotstatus/props:** 2-3 hours (protocol change + device.py adaptation)
+- **Map data fetch + parse:** 2-3 hours (new endpoint + chunk reassembly)
+- **Map renderer:** 4-6 hours (polygon rendering, path drawing, coordinate scaling)
+- **Camera entity integration:** 2-3 hours (wire renderer to camera entity)
+- **Total:** ~12-15 hours of focused development
+
+*Last updated: 2026-03-14 22:00*
 *Author: Claude (assisted by Nils)*
