@@ -23,16 +23,16 @@ Requirements for initial working release. Each maps to roadmap phases.
 
 ### Control
 
-- [ ] **CTRL-01**: User can start mowing from HA
-- [ ] **CTRL-02**: User can pause mowing from HA
-- [ ] **CTRL-03**: User can send mower to dock from HA without breaking device schedules (fix #35)
+- [x] **CTRL-01**: User can start mowing from HA
+- [x] **CTRL-02**: User can pause mowing from HA
+- [x] **CTRL-03**: User can send mower to dock from HA without breaking device schedules (fix #35)
 
 ### Sensors
 
 - [ ] **SENS-01**: Battery level displayed as percentage sensor
-- [ ] **SENS-02**: Mower state sensor shows current activity (mowing, docked, paused, returning, charging, error)
+- [x] **SENS-02**: Mower state sensor shows current activity (mowing, docked, paused, returning, charging, error)
 - [ ] **SENS-03**: Error state sensor shows error description when mower has a fault
-- [ ] **SENS-04**: Online/connectivity binary sensor shows cloud connection status
+- [x] **SENS-04**: Online/connectivity binary sensor shows cloud connection status
 - [ ] **SENS-05**: Mowing progress sensor shows percentage of area completed
 - [ ] **SENS-06**: Area mowed sensor shows square meters mowed in current session
 - [ ] **SENS-07**: Blade usage sensor shows wear percentage or hours remaining
@@ -99,13 +99,13 @@ Deferred to future release. Tracked but not in current roadmap.
 | CONN-03 | Phase 1: Stabilize and Connect | Pending |
 | CONN-04 | Phase 1: Stabilize and Connect | Complete |
 | CLEAN-02 | Phase 1: Stabilize and Connect | Complete |
-| CTRL-01 | Phase 2: Control and Sensors | Pending |
-| CTRL-02 | Phase 2: Control and Sensors | Pending |
-| CTRL-03 | Phase 2: Control and Sensors | Pending |
+| CTRL-01 | Phase 2: Control and Sensors | Complete |
+| CTRL-02 | Phase 2: Control and Sensors | Complete |
+| CTRL-03 | Phase 2: Control and Sensors | Complete |
 | SENS-01 | Phase 2: Control and Sensors | Pending |
-| SENS-02 | Phase 2: Control and Sensors | Pending |
+| SENS-02 | Phase 2: Control and Sensors | Complete |
 | SENS-03 | Phase 2: Control and Sensors | Pending |
-| SENS-04 | Phase 2: Control and Sensors | Pending |
+| SENS-04 | Phase 2: Control and Sensors | Complete |
 | SENS-05 | Phase 2: Control and Sensors | Pending |
 | SENS-06 | Phase 2: Control and Sensors | Pending |
 | SENS-07 | Phase 2: Control and Sensors | Pending |
@@ -123,4 +123,4 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-03-14*
-*Last updated: 2026-03-14 after roadmap creation (3-phase coarse structure)*
+*Last updated: 2026-03-14 after 02-01 completion (CTRL-01/02/03, SENS-02, SENS-04)*

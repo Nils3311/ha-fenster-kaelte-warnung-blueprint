@@ -47,7 +47,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- Fix controls (RETURNING state, dock-breaks-schedules), create connectivity binary sensor, clean vacuum refs from lawn_mower.py
+- [x] 02-01-PLAN.md -- Fix controls (RETURNING state, dock-breaks-schedules), create connectivity binary sensor, clean vacuum refs from lawn_mower.py
 - [ ] 02-02-PLAN.md -- Remove vacuum entity descriptions from sensor/button/switch/select, prune coordinator consumable checks, clean const.py, verify in HA
 
 ### Phase 3: Live Map
@@ -72,5 +72,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stabilize and Connect | 1.5/2 | Awaiting User Action (01-02 pairing checkpoint) | - |
-| 2. Control and Sensors | 0/2 | Planned | - |
+| 2. Control and Sensors | 1/2 | In Progress | - |
 | 3. Live Map | 0/0 | Not started | - |

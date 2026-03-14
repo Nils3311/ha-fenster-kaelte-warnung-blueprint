@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-03-14)
 
 **Core value:** Users can see their Mova 600 Plus on a live map in Home Assistant and control it with reliable status feedback.
-**Current focus:** Phase 1: Stabilize and Connect
+**Current focus:** Phase 2: Control and Sensors
 
 ## Current Position
 
-Phase: 1 of 3 (Stabilize and Connect)
-Plan: 2 of 2 in current phase (partial -- Task 2 pending user action)
-Status: Awaiting User Action (live device pairing checkpoint)
-Last activity: 2026-03-14 -- Partially completed 01-02 (Live Device Pairing)
+Phase: 2 of 3 (Control and Sensors)
+Plan: 1 of 2 in current phase (complete)
+Status: In Progress
+Last activity: 2026-03-14 -- Completed 02-01 (Mower Controls and Connectivity)
 
-Progress: [███░░░░░░░] 25%
+Progress: [█████░░░░░] 45%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1.5 (01-02 partial)
+- Total plans completed: 2.5 (01-02 partial)
 - Average duration: 2 min
-- Total execution time: 0.07 hours
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-stabilize-and-connect | 1/2 | 3 min | 3 min |
+| 02-control-and-sensors | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (1 min, partial)
-- Trend: baseline
+- Last 5 plans: 01-01 (3 min), 01-02 (1 min, partial), 02-01 (3 min)
+- Trend: consistent
 
 *Updated after each plan completion*
 
@@ -48,6 +49,8 @@ Recent decisions affecting current work:
 - [01-01]: Store unknown property values in self.data[did] for future debugging reference
 - [01-01]: Use raw device model string as model_map fallback rather than generic "Unknown"
 - [01-02]: Task 2 (live pairing) deferred as pending checkpoint -- requires user to restart HA and complete config flow UI
+- [02-01]: Stop-before-dock calls device.stop() then device.dock() to mark session COMPLETED and prevent cloud schedule breakage
+- [02-01]: Connectivity binary sensor reads device_connected (protocol.connected) rather than a Dreame property
 
 ### Pending Todos
 
@@ -62,6 +65,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Partially completed 01-02-PLAN.md (Live Device Pairing) -- Task 1 done, Task 2 pending user action
-Resume file: .planning/phases/01-stabilize-and-connect/01-02-SUMMARY.md
-Next action: User must restart HA, pair Mova 600 Plus via config flow, report model ID and connection stability
+Stopped at: Completed 02-01-PLAN.md (Mower Controls and Connectivity)
+Resume file: .planning/phases/02-control-and-sensors/02-01-SUMMARY.md
+Next action: Execute 02-02-PLAN.md (vacuum entity cleanup in sensor/button/switch/select)
