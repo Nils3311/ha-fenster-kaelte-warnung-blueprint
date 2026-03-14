@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-03-14)
 ## Current Position
 
 Phase: 2 of 3 (Control and Sensors)
-Plan: 1 of 2 in current phase (complete)
-Status: In Progress
-Last activity: 2026-03-14 -- Completed 02-01 (Mower Controls and Connectivity)
+Plan: 2 of 2 in current phase (awaiting checkpoint)
+Status: Checkpoint -- awaiting HA restart and entity verification
+Last activity: 2026-03-14 -- Completed 02-02 Tasks 1-2 (Vacuum Entity Cleanup), Task 3 checkpoint pending
 
-Progress: [█████░░░░░] 45%
+Progress: [██████░░░░] 55%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2.5 (01-02 partial)
-- Average duration: 2 min
-- Total execution time: 0.12 hours
+- Total plans completed: 3.5 (01-02 partial, 02-02 checkpoint pending)
+- Average duration: 3 min
+- Total execution time: 0.18 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-stabilize-and-connect | 1/2 | 3 min | 3 min |
-| 02-control-and-sensors | 1/2 | 3 min | 3 min |
+| 02-control-and-sensors | 2/2 | 7 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (1 min, partial), 02-01 (3 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (1 min, partial), 02-01 (3 min), 02-02 (4 min)
 - Trend: consistent
 
 *Updated after each plan completion*
@@ -51,6 +51,8 @@ Recent decisions affecting current work:
 - [01-02]: Task 2 (live pairing) deferred as pending checkpoint -- requires user to restart HA and complete config flow UI
 - [02-01]: Stop-before-dock calls device.stop() then device.dock() to mark session COMPLETED and prevent cloud schedule breakage
 - [02-01]: Connectivity binary sensor reads device_connected (protocol.connected) rather than a Dreame property
+- [02-02]: Remove vacuum descriptions entirely rather than guarding with exists_fn -- mower hardware never has these properties
+- [02-02]: Keep DreameMowerAIProperty import since AI_OBSTACLE_DETECTION (LiDAR) is valid for mowers
 
 ### Pending Todos
 
@@ -65,6 +67,6 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: Completed 02-01-PLAN.md (Mower Controls and Connectivity)
-Resume file: .planning/phases/02-control-and-sensors/02-01-SUMMARY.md
-Next action: Execute 02-02-PLAN.md (vacuum entity cleanup in sensor/button/switch/select)
+Stopped at: 02-02-PLAN.md Task 3 checkpoint (awaiting HA restart and entity verification)
+Resume file: .planning/phases/02-control-and-sensors/02-02-SUMMARY.md
+Next action: User restarts HA, verifies entities, then Phase 2 complete -- proceed to Phase 3

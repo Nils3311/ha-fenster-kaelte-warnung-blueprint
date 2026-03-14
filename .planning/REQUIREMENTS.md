@@ -29,14 +29,14 @@ Requirements for initial working release. Each maps to roadmap phases.
 
 ### Sensors
 
-- [ ] **SENS-01**: Battery level displayed as percentage sensor
+- [x] **SENS-01**: Battery level displayed as percentage sensor
 - [x] **SENS-02**: Mower state sensor shows current activity (mowing, docked, paused, returning, charging, error)
-- [ ] **SENS-03**: Error state sensor shows error description when mower has a fault
+- [x] **SENS-03**: Error state sensor shows error description when mower has a fault
 - [x] **SENS-04**: Online/connectivity binary sensor shows cloud connection status
-- [ ] **SENS-05**: Mowing progress sensor shows percentage of area completed
-- [ ] **SENS-06**: Area mowed sensor shows square meters mowed in current session
-- [ ] **SENS-07**: Blade usage sensor shows wear percentage or hours remaining
-- [ ] **SENS-08**: Blade consumable reset button available
+- [x] **SENS-05**: Mowing progress sensor shows percentage of area completed
+- [x] **SENS-06**: Area mowed sensor shows square meters mowed in current session
+- [x] **SENS-07**: Blade usage sensor shows wear percentage or hours remaining
+- [x] **SENS-08**: Blade consumable reset button available
 
 ### Map
 
@@ -47,7 +47,7 @@ Requirements for initial working release. Each maps to roadmap phases.
 
 ### Cleanup
 
-- [ ] **CLEAN-01**: Vacuum-specific entities (suction, mop, carpet, dust bin) are not exposed for mower devices
+- [x] **CLEAN-01**: Vacuum-specific entities (suction, mop, carpet, dust bin) are not exposed for mower devices
 - [x] **CLEAN-02**: Config flow deprecation warnings resolved (fix #41)
 
 ## v2 Requirements
@@ -102,15 +102,15 @@ Deferred to future release. Tracked but not in current roadmap.
 | CTRL-01 | Phase 2: Control and Sensors | Complete |
 | CTRL-02 | Phase 2: Control and Sensors | Complete |
 | CTRL-03 | Phase 2: Control and Sensors | Complete |
-| SENS-01 | Phase 2: Control and Sensors | Pending |
+| SENS-01 | Phase 2: Control and Sensors | Complete |
 | SENS-02 | Phase 2: Control and Sensors | Complete |
-| SENS-03 | Phase 2: Control and Sensors | Pending |
+| SENS-03 | Phase 2: Control and Sensors | Complete |
 | SENS-04 | Phase 2: Control and Sensors | Complete |
-| SENS-05 | Phase 2: Control and Sensors | Pending |
-| SENS-06 | Phase 2: Control and Sensors | Pending |
-| SENS-07 | Phase 2: Control and Sensors | Pending |
-| SENS-08 | Phase 2: Control and Sensors | Pending |
-| CLEAN-01 | Phase 2: Control and Sensors | Pending |
+| SENS-05 | Phase 2: Control and Sensors | Complete |
+| SENS-06 | Phase 2: Control and Sensors | Complete |
+| SENS-07 | Phase 2: Control and Sensors | Complete |
+| SENS-08 | Phase 2: Control and Sensors | Complete |
+| CLEAN-01 | Phase 2: Control and Sensors | Complete |
 | MAP-01 | Phase 3: Live Map | Pending |
 | MAP-02 | Phase 3: Live Map | Pending |
 | MAP-03 | Phase 3: Live Map | Pending |
@@ -123,4 +123,4 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-03-14*
-*Last updated: 2026-03-14 after 02-01 completion (CTRL-01/02/03, SENS-02, SENS-04)*
+*Last updated: 2026-03-14 after 02-02 completion (SENS-01/03/05/06/07/08, CLEAN-01)*

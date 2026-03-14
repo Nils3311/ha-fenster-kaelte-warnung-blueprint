@@ -48,7 +48,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md -- Fix controls (RETURNING state, dock-breaks-schedules), create connectivity binary sensor, clean vacuum refs from lawn_mower.py
-- [ ] 02-02-PLAN.md -- Remove vacuum entity descriptions from sensor/button/switch/select, prune coordinator consumable checks, clean const.py, verify in HA
+- [x] 02-02-PLAN.md -- Remove vacuum entity descriptions from sensor/button/switch/select, prune coordinator consumable checks, clean const.py (Tasks 1-2 done, Task 3 checkpoint pending)
 
 ### Phase 3: Live Map
 **Goal**: Users can see their Mova 600 Plus on a live map in Home Assistant showing position and mowed area
@@ -72,5 +72,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stabilize and Connect | 1.5/2 | Awaiting User Action (01-02 pairing checkpoint) | - |
-| 2. Control and Sensors | 1/2 | In Progress | - |
+| 2. Control and Sensors | 2/2 | Awaiting Checkpoint (entity verification) | - |
 | 3. Live Map | 0/0 | Not started | - |
