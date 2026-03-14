@@ -44,11 +44,11 @@ Plans:
   3. An online/connectivity binary sensor shows whether the cloud connection is active
   4. A blade consumable reset button is available and functional
   5. No vacuum-specific entities (suction, mop, carpet, dust bin) appear in the entity list
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md -- Fix controls (RETURNING state, dock-breaks-schedules), create connectivity binary sensor, clean vacuum refs from lawn_mower.py
+- [ ] 02-02-PLAN.md -- Remove vacuum entity descriptions from sensor/button/switch/select, prune coordinator consumable checks, clean const.py, verify in HA
 
 ### Phase 3: Live Map
 **Goal**: Users can see their Mova 600 Plus on a live map in Home Assistant showing position and mowed area
@@ -72,5 +72,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Stabilize and Connect | 1.5/2 | Awaiting User Action (01-02 pairing checkpoint) | - |
-| 2. Control and Sensors | 0/0 | Not started | - |
+| 2. Control and Sensors | 0/2 | Planned | - |
 | 3. Live Map | 0/0 | Not started | - |
