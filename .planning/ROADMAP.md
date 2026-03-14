@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Integration discovers the Mova 600 Plus, confirms its model ID, and maintains a stable cloud MQTT connection
   4. Unknown property IDs from the Mova 600 Plus are silently skipped -- no crashes from unrecognized device data
   5. HA logs show no deprecation warnings from config flow (fix #41) and no startup errors
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md -- Fix all blocking bugs: manifest dependencies, mini-racer import, unknown property crash, OptionsFlow deprecation, camera _webrtc_provider, map result type checks, model_map KeyError
+- [ ] 01-02-PLAN.md -- Live device pairing: restart HA, pair Mova 600 Plus via config flow, verify stable MQTT connection
 
 ### Phase 2: Control and Sensors
 **Goal**: Users can control their mower and monitor all key metrics from Home Assistant
@@ -71,6 +71,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Stabilize and Connect | 0/0 | Not started | - |
+| 1. Stabilize and Connect | 0/2 | Planned | - |
 | 2. Control and Sensors | 0/0 | Not started | - |
 | 3. Live Map | 0/0 | Not started | - |
