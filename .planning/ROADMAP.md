@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md -- Fix all blocking bugs: manifest dependencies, mini-racer import, unknown property crash, OptionsFlow deprecation, camera _webrtc_provider, map result type checks, model_map KeyError
-- [ ] 01-02-PLAN.md -- Live device pairing: restart HA, pair Mova 600 Plus via config flow, verify stable MQTT connection
+- [ ] 01-02-PLAN.md -- Live device pairing: restart HA, pair Mova 600 Plus via config flow, verify stable MQTT connection (Task 1 done, Task 2 pending user action)
 
 ### Phase 2: Control and Sensors
 **Goal**: Users can control their mower and monitor all key metrics from Home Assistant
@@ -71,6 +71,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Stabilize and Connect | 1/2 | In Progress | - |
+| 1. Stabilize and Connect | 1.5/2 | Awaiting User Action (01-02 pairing checkpoint) | - |
 | 2. Control and Sensors | 0/0 | Not started | - |
 | 3. Live Map | 0/0 | Not started | - |
