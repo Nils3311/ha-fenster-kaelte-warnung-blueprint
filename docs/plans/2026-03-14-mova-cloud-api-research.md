@@ -592,5 +592,205 @@ def get_properties_mova(self, siid_piid_list: list[str]) -> list[dict]:
 - **Camera entity integration:** 2-3 hours (wire renderer to camera entity)
 - **Total:** ~12-15 hours of focused development
 
-*Last updated: 2026-03-14 22:00*
+---
+
+## 14. Critical Gotchas a New Developer Would Miss
+
+### Gotcha 1: `sendCommand` DOES work from HA Docker — with a host prefix
+
+Our local test got 404 for `sendCommand`, but HA gets 3 properties through it. Why?
+
+In `protocol.py` line 440-441, the URL gets a **host prefix** derived from `device_info.bindDomain`:
+```python
+host = f"-{self._host.split('.')[0]}"
+# self._host = "20000.mt.eu.iot.mova-tech.com:19974"
+# self._host.split('.')[0] = "20000"
+# host = "-20000"
+```
+
+So the actual URL HA uses is:
+```
+https://{country}.iot.mova-tech.com:13267/dreame-iot-com-20000/device/sendCommand
+```
+
+NOT `dreame-iot-com/device/sendCommand` (which is what our local test tried).
+
+**But**: even with the host prefix, only 3 of 13 properties return data. The API silently drops unsupported properties. So `sendCommand` works but is incomplete — `iotstatus/props` is more reliable for Mova.
+
+**For local testing**, use the host prefix:
+```python
+host_prefix = f"-{device_bind_domain.split('.')[0]}"  # e.g., "-20000"
+api_url = f"{BASE}/dreame-iot-com{host_prefix}/device/sendCommand"
+```
+
+### Gotcha 2: `_api_call` sends JSON as form-data, not as JSON
+
+`protocol.py` `_api_call` (line 126-131) serializes params as JSON then sends via `data=` (not `json=`):
+```python
+def _api_call(self, url, params=None, retry_count=2):
+    return self.request(
+        f"{self.get_api_url()}/{url}",
+        json.dumps(params, separators=(",", ":")) if params is not None else None,
+        retry_count,
+    )
+```
+
+And `request()` sets `Content-Type: application/x-www-form-urlencoded` but sends a JSON string body. This is weird but it's how the Dreame API works.
+
+**However**, the newer endpoints (`iotstatus/props`, `iotuserdata/getDeviceData`) accept proper `Content-Type: application/json` with `json=params`. Our local tests used `json=` and worked fine.
+
+**Decision for implementation:** For new Mova-specific methods, use `json=params` directly. For methods that must go through existing `_api_call`, keep the weird encoding.
+
+### Gotcha 3: `uid` changes every login session
+
+The `uid` / `u` field in the login response is different each time:
+- Login 1: `uid=13506984`
+- Login 2: `uid=14334762`
+- Login 3: `uid=14935817`
+
+This is a **session-scoped user reference**, not a permanent user ID. The integration stores it as `self._uid` after login and uses it for all subsequent calls. When implementing `getDeviceData`, you must use the current session's `uid`, not a hardcoded one.
+
+### Gotcha 4: Token refresh every 2 hours
+
+`expires_in: 7200` (2 hours). The integration handles this in `request()` line 590:
+```python
+if self._key_expire and time.time() > self._key_expire:
+    self.login()
+```
+
+New API methods must go through the existing `request()` or `_api_call()` to get automatic token refresh. Don't call endpoints directly with a stored token without checking expiry.
+
+### Gotcha 5: MQTT auth requires specific client key setup
+
+Our local MQTT test failed with `rc=5` (not authorized). The integration succeeds because `protocol.py` line 264 calls `self._set_client_key()` which sets:
+```python
+self._client.username_pw_set(self._uuid, self._client_key)
+```
+
+Where `_uuid` comes from login response `uid` field, and `_client_key` is the access token. The client ID format is also specific (line 254):
+```python
+f"p_{self._uid}_{agent_id}_{host[0]}"
+```
+
+### Gotcha 6: `iotstatus/props` response needs transformation
+
+The integration's `_handle_properties()` expects this format (from `sendCommand`):
+```json
+{"did": -113852546, "siid": 2, "piid": 1, "code": 0, "value": 1}
+```
+
+But `iotstatus/props` returns:
+```json
+{"key": "2.1", "value": "1", "updateDate": 1773512954837}
+```
+
+**You need a transform layer** to convert `iotstatus/props` responses to the format `_handle_properties` expects:
+```python
+def transform_props_response(props_result: list, did: str) -> list:
+    """Convert iotstatus/props format to sendCommand format."""
+    result = []
+    for p in props_result:
+        if "value" not in p:
+            continue
+        parts = p["key"].split(".")
+        result.append({
+            "did": did,
+            "siid": int(parts[0]),
+            "piid": int(parts[1]),
+            "code": 0,
+            "value": p["value"]  # Note: value is a STRING, may need int() conversion
+        })
+    return result
+```
+
+**Watch out:** `iotstatus/props` returns values as **strings** (e.g., `"1"` not `1`). The existing property handlers may expect integers. Test with actual data.
+
+### Gotcha 7: Map coordinate system
+
+The map coordinates are in **millimeters** relative to an origin point (likely the charging station). The `boundary` field gives the bounding box:
+```json
+{"x1": -15050, "y1": -22710, "x2": 1420, "y2": 7330}
+```
+
+This is a 16470mm × 30040mm area (16.5m × 30m). The **Y axis is inverted** for rendering (screen Y goes down, map Y goes up). The renderer must flip Y:
+```python
+screen_y = height - int((p["y"] - boundary["y1"]) * scale)
+```
+
+### Gotcha 8: `contours` vs `mowingAreas` vs `boundary`
+
+- **`boundary`**: Bounding box (rectangle) of the entire map — used for coordinate scaling
+- **`mowingAreas`**: The actual mowable lawn polygons (what the mower can mow)
+- **`contours`**: The garden perimeter outlines as detected by the mower — these are the visual boundary lines to draw
+- **`forbiddenAreas`**: No-go zones set by the user
+
+For rendering: draw `contours` as the garden outline, fill `mowingAreas` as the lawn, overlay `forbiddenAreas` as red zones.
+
+### Gotcha 9: M_PATH segment separator
+
+The mowing path data uses `[32767, -32768]` as a **pen-up marker** (move without cutting). When rendering paths, split on this sentinel value:
+```python
+segments = []
+current_segment = []
+for i in range(0, len(path_coords), 2):
+    x, y = path_coords[i], path_coords[i+1]
+    if x == 32767 and y == -32768:
+        if current_segment:
+            segments.append(current_segment)
+        current_segment = []
+    else:
+        current_segment.append((x, y))
+```
+
+### Gotcha 10: `getDeviceData` is expensive — cache it
+
+The `getDeviceData` response is ~57KB. Don't call it every update cycle (10 seconds). Map data changes rarely — only when:
+- A mowing session completes (new M_PATH data)
+- User edits zones in the app (new MAP data)
+- A new mapping session finishes
+
+**Recommended:** Fetch on startup, then re-fetch every 5 minutes or when `mower_state` transitions from `mowing` to `completed`.
+
+### Gotcha 11: The dreame_mower integration has a SEPARATE dreame_vacuum already running
+
+The user has Tasshack's `dreame_vacuum` for their robot vacuum "Momo". Both integrations use similar code paths and constant names. When importing from `dreame/`, make absolutely sure you're modifying `custom_components/dreame_mower/`, NOT `custom_components/dreame_vacuum/`.
+
+### Gotcha 12: Syncing changes between live and git
+
+The integration code lives in TWO places:
+1. `/Volumes/config/custom_components/dreame_mower/` — live HA reads from here
+2. `/Volumes/config/custom_components/dreame_mower_repo/custom_components/dreame_mower/` — git repo
+
+After editing live files, you must copy them to the git repo:
+```bash
+cp /Volumes/config/custom_components/dreame_mower/CHANGED_FILE \
+   /Volumes/config/custom_components/dreame_mower_repo/custom_components/dreame_mower/CHANGED_FILE
+```
+
+Alternatively, you could replace the live directory with a symlink to the repo — but HA Docker can't follow symlinks across volume boundaries (we learned this the hard way).
+
+---
+
+## 15. Quick-Start for a New Developer
+
+1. **Read this document** (you're doing it)
+2. **Run the test scripts** to verify API access:
+   ```bash
+   cd /Users/nilshoffmann/Documents/Programmieren/hass
+   pip3 install --break-system-packages pycryptodome python-miio paho-mqtt requests
+   python3 test_mova_mapdata.py  # Fetches complete map data
+   ```
+3. **Look at the raw data**: `mova_full_mapdata.json` has all 58 keys, `mova_map_parsed.json` has the parsed map structure
+4. **Understand the two rendering approaches**:
+   - The existing `dreame/map.py` (9000+ lines) handles Dreame Vacuum's raster pixel maps — **don't try to adapt this**
+   - Write a new `dreame/mova_map.py` (~200 lines) that renders Mova's vector polygons with PIL
+5. **Wire it into the integration**:
+   - `protocol.py`: Add `get_device_user_data()` method
+   - `device.py`: Call it on startup, parse MAP/M_PATH/SETTINGS chunks
+   - New `mova_map.py`: Render PNG from parsed data
+   - `camera.py`: Use the new renderer for the camera entity image
+6. **Test locally** with `python3 -c "import ast; ast.parse(open('file').read())"` after every change
+7. **Test in HA** by copying to live dir and restarting (takes 60 seconds)
+
+*Last updated: 2026-03-14 22:30*
 *Author: Claude (assisted by Nils)*
