@@ -1,6 +1,13 @@
 blueprint:
-  name: Fenster/Tür offen bei Kälte Warnung
-  description: Benachrichtigt wenn ein Fenster oder eine Tür länger als die konfigurierte Zeit bei niedrigen Außentemperaturen offen ist.
+  name: Fenster/Tür offen bei Kälte Warnung (Temperatur-adaptiv)
+  description: >-
+    Benachrichtigt wenn ein Fenster oder eine Tür bei Kälte zu lange offen ist.
+    Die Wartezeit passt sich automatisch an die Außentemperatur an —
+    bei milder Kälte (nahe der Schwelle) bleibt mehr Zeit zum Lüften,
+    bei extremer Kälte kommt die Warnung früher.
+
+    Beispiel mit Standardwerten: Bei 15°C wird 30 Minuten gewartet, bei -15°C nur 8 Minuten.
+    Zweite Erinnerung optional, nur wenn es kälter als eine separate Schwelle ist.
   domain: automation
   source_url: https://github.com/Nils3311/ha-fenster-kaelte-warnung-blueprint/blob/main/cold_window_alert_blueprint.yaml
   input:
@@ -15,19 +22,10 @@ blueprint:
                 - door
                 - window
                 - opening
-    duration_minutes:
-      name: Dauer (Minuten)
-      description: Wie lange das Fenster/die Tür offen sein muss bevor eine Warnung gesendet wird
-      default: 10
-      selector:
-        number:
-          min: 1
-          max: 120
-          unit_of_measurement: "min"
-          mode: slider
+
     temperature_threshold:
-      name: Temperatur Schwelle
-      description: Temperatur unter der die Warnung gesendet werden soll
+      name: Temperatur Schwelle (°C)
+      description: Temperatur unter der die Warnung aktiv ist. Bei wärmerer Temperatur passiert nichts.
       default: 15
       selector:
         number:
@@ -35,6 +33,47 @@ blueprint:
           max: 30
           unit_of_measurement: "°C"
           mode: slider
+
+    delay_at_threshold:
+      name: Wartezeit bei milder Kälte (Minuten)
+      description: >-
+        Wie lange das Fenster offen sein darf wenn die Temperatur genau an der Schwelle liegt.
+        Bei nur leichter Kälte kann länger gelüftet werden.
+      default: 30
+
+      selector:
+        number:
+          min: 5
+          max: 120
+          unit_of_measurement: "min"
+          mode: slider
+
+    delay_at_extreme:
+      name: Wartezeit bei extremer Kälte (Minuten)
+      description: >-
+        Kürzeste Wartezeit bei starker Kälte (Referenztemperatur oder kälter).
+        Die Wohnung kühlt bei extremer Kälte viel schneller aus.
+      default: 8
+      selector:
+        number:
+          min: 1
+          max: 60
+          unit_of_measurement: "min"
+          mode: slider
+
+    extreme_temperature:
+      name: Referenztemperatur für extreme Kälte (°C)
+      description: >-
+        Ab dieser Temperatur gilt die minimale Wartezeit. Typisch: -10°C bis -20°C.
+        Zwischen Schwelle und dieser Temperatur wird die Wartezeit linear interpoliert.
+      default: -15
+      selector:
+        number:
+          min: -30
+          max: 0
+          unit_of_measurement: "°C"
+          mode: slider
+
     weather_entity:
       name: Wetter Entity
       description: Wetter-Entity die für die Außentemperatur verwendet wird
@@ -43,21 +82,36 @@ blueprint:
         entity:
           filter:
             - domain: weather
+
     enable_second_reminder:
       name: Zweite Erinnerung aktivieren
       description: Soll eine zweite Erinnerung gesendet werden, wenn das Fenster/die Tür immer noch offen ist?
-      default: false
+      default: true
       selector:
         boolean:
+
     second_reminder_delay:
       name: Verzögerung für zweite Erinnerung (Minuten)
       description: Wie lange nach der ersten Erinnerung soll die zweite gesendet werden?
-      default: 30
+      default: 60
       selector:
         number:
           min: 5
           max: 180
           unit_of_measurement: "min"
+          mode: slider
+
+    second_reminder_threshold:
+      name: Temperatur Schwelle für zweite Erinnerung (°C)
+      description: >-
+        Zweite Erinnerung wird nur gesendet wenn die Temperatur unter dieser Schwelle liegt.
+        So wird bei milder Kälte nur einmal erinnert, bei stärkerer Kälte doppelt.
+      default: 8
+      selector:
+        number:
+          min: -20
+          max: 30
+          unit_of_measurement: "°C"
           mode: slider
 
 mode: queued
@@ -67,9 +121,8 @@ trigger:
   - platform: state
     entity_id: !input window_door_sensor
     to: "on"
-    for:
-      minutes: !input duration_minutes
 
+# Early check: if it's not cold at all, don't even start waiting
 condition:
   - condition: numeric_state
     entity_id: !input weather_entity
@@ -79,20 +132,58 @@ condition:
 action:
   - variables:
       weather_entity: !input weather_entity
-      duration_minutes: !input duration_minutes
+      window_sensor: !input window_door_sensor
+      threshold: !input temperature_threshold
+      delay_warm: !input delay_at_threshold
+      delay_cold: !input delay_at_extreme
+      extreme_temp_ref: !input extreme_temperature
       enable_second_reminder: !input enable_second_reminder
       second_reminder_delay: !input second_reminder_delay
-      window_sensor: !input window_door_sensor
-  - action: notify.notify
+      second_reminder_threshold: !input second_reminder_threshold
+      current_temp: "{{ state_attr(weather_entity, 'temperature') | float(0) }}"
+      # Linear interpolation between delay_warm (at threshold) and delay_cold (at extreme_temp_ref).
+      # frac=0 → mild cold (at threshold) → use delay_warm
+      # frac=1 → extreme cold (at extreme_temp_ref or colder) → use delay_cold
+      adaptive_delay: >-
+        {% if extreme_temp_ref == threshold %}
+          {{ delay_warm }}
+        {% else %}
+          {% set frac_raw = (current_temp - threshold) / (extreme_temp_ref - threshold) %}
+          {% set frac = [([frac_raw, 0] | max), 1] | min %}
+          {{ (delay_warm + (delay_cold - delay_warm) * frac) | round | int }}
+        {% endif %}
+
+  # Wait adaptively — shorter at extreme cold, longer at mild cold
+  - wait_for_trigger:
+      - platform: state
+        entity_id: !input window_door_sensor
+        to: "off"
+    timeout:
+      minutes: "{{ adaptive_delay | int }}"
+
+  # Only proceed if window is still open after the adaptive wait
+  - condition: template
+    value_template: "{{ wait.trigger == none }}"
+
+  # Re-check temperature at time of alert (might have changed during wait)
+  - condition: numeric_state
+    entity_id: !input weather_entity
+    attribute: temperature
+    below: !input temperature_threshold
+
+  - action: script.notify_all_users
     data:
       message: >-
-        {{ trigger.to_state.attributes.friendly_name | default(trigger.to_state.entity_id) }}
-        ist seit über {{ duration_minutes }} Minuten offen,
+        {{ state_attr(window_sensor, 'friendly_name') | default(window_sensor) }}
+        ist seit über {{ adaptive_delay }} Minuten offen,
         bei {{ state_attr(weather_entity, 'temperature') }}°C draußen.
         Denke daran es zu schließen.
+
   - if:
       - condition: template
         value_template: "{{ enable_second_reminder }}"
+      - condition: template
+        value_template: "{{ state_attr(weather_entity, 'temperature') | float(0) < second_reminder_threshold }}"
     then:
       - wait_for_trigger:
           - platform: state
@@ -104,10 +195,10 @@ action:
           - condition: template
             value_template: "{{ wait.trigger == none }}"
         then:
-          - action: notify.notify
+          - action: script.notify_all_users
             data:
               message: >-
                 ⚠️ ZWEITE ERINNERUNG: {{ state_attr(window_sensor, 'friendly_name') | default(window_sensor) }}
-                ist immer noch offen (seit über {{ duration_minutes + second_reminder_delay }} Minuten),
+                ist immer noch offen (seit über {{ adaptive_delay + second_reminder_delay }} Minuten),
                 bei {{ state_attr(weather_entity, 'temperature') }}°C draußen.
                 Bitte schließen!
